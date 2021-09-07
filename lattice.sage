@@ -177,3 +177,23 @@ def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ):
 	if verbose > 0:
 		print( "dtime2 =", end-middle )
 	return (None,None)
+
+
+def strategy_find_szego_polynomial( f, deg_max=14, sol_max=60, verbose=0 ):
+    for deg in range(1,deg_max+1):
+        if verbose > 0:
+            print( "--- degree", deg, "---" )
+        (is_indec,g) = find_szego_polynomial( f, deg, sol_max, verbose=verbose-1 )
+        if is_indec != None:
+            return (is_indec,g)
+    return (None,None)
+
+
+def strategy_find_fekete_polynomial( f, deg_max=14, sol_max=60, verbose=0 ):
+    for deg in range(1,deg_max+1):
+        if verbose > 0:
+            print( "--- degree", deg, "---" )
+        (is_indec,g) = find_fekete_polynomial( f, deg, sol_max, verbose=verbose-1 )
+        if is_indec != None:
+            return (is_indec,g)
+    return (None,None)
