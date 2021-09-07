@@ -5,7 +5,7 @@ load("basic.sage")
 load("exponential.sage")
 
 class OrderLattice:
-	def __init__( self, order, precision = 10 ):
+	def __init__( self, order, precision = 5 ):
 		self.R = order
 		self.prec = precision
 		self.K = self.R.number_field()
@@ -34,7 +34,7 @@ def coeff_list( f, n ):
 	return L + [0]*(n-len(L))
 
 class PolynomialLattice:
-	def __init__( self, polynomial_ring, order, n, center=0, radius=1 ):
+	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0 ):
 		self.P = polynomial_ring
 		self.R = order
 		self.c = center
@@ -71,7 +71,7 @@ class PolynomialLattice:
 		Binv = Matrix( RR, self.B ).inverse()
 		A = IntegerMatrix( self.B )
 		BKZ.reduction( A, BKZ.Param(20) )
-		F = GSO.Mat( A )
+		F = GSO.Mat(A)
 		F.update_gso()
 		if verbose > 0:
 			print(A)
