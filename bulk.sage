@@ -50,7 +50,7 @@ def apply_strategy( data, strat, verbose=2 ):
 			sys.stdout.flush()
 		if data[f][0] == None:
 			try:
-				_, result = strat( f, verbose=verbose-1 )
+				_, result = strat( f )
 				data_copy[f] = result
 				if result[0] != None:
 					print( "FOUND POLYNOMIAL:", result[1] )

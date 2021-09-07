@@ -28,6 +28,7 @@ print(
 "Available strategies include strategy_find_szego_polynomial and strategy_find_fekete_polynomial from lattice.sage. "
 )
 print("Example:")
-print("sage: results = apply_strategy(todo,strategy_find_szego_polynomial)")
+print("sage: results = apply_strategy(todo,strategy_find_szego_polynomial(10))")
 print("sage: data = {**data,**results}")
 print("sage: write_file(data,\"polynomial_data_deg_3.txt\")")
+
