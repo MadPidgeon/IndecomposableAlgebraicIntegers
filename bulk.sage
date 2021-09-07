@@ -38,6 +38,7 @@ def create_file( deg, filename_prefix='polynomial_data', overwrite=False ):
 
 ### Applying strategies
 def apply_strategy( data, strat, verbose=2 ):
+	data_copy = dict(data)
 	n = len(data)
 	for m, f in enumerate(data):
 		if verbose == 1:
@@ -49,26 +50,27 @@ def apply_strategy( data, strat, verbose=2 ):
 			sys.stdout.flush()
 		if data[f][0] == None:
 			try:
-				data[f] = strat( f, verbose=verbose-1 )
-				if data[f][0] != None:
-					print( "FOUND POLYNOMIAL:", data[f][1] )
+				_, result = strat( f, verbose=verbose-1 )
+				data_copy[f] = result
+				if result[0] != None:
+					print( "FOUND POLYNOMIAL:", result[1] )
 			except:
 				pass
 	if verbose>0:
 		sys.stdout.write("\rDone!                             \n")
 		sys.stdout.flush()
-	return data
+	return data_copy
 
-def apply_strategy_parallel( data, strat, workers = 2 ):
+def apply_strategy_parallel( data, strat, workers = 8 ):
 	flatten_data = [ f for (f,(a,b)) in data.items() if a == None ]
 	n = len(flatten_data)
 	rdata = []
 	p = Pool( workers )
-	for m, retval in enumerate( p.imap_unordered( strat, flatten_data, 1) ):
+	for m, retval in enumerate( p.imap_unordered( strat, flatten_data, 1 ) ):
 		rdata.append(retval)
 		if retval[1][0] != None:
-			print( "FOUND POLYNOMIAL:", retval[1][1] )
-		sys.stderr.write("\rApplying to polynomial %i/%i..." % (m+1,n))
+			sys.stderr.write( "FOUND POLYNOMIAL: %s\n" % str(retval[1][1]) )
+		sys.stderr.write("\rApplying to polynomial %i/%i...\n" % (m+1,n))
 		sys.stderr.flush()
 	sys.stderr.write("\rDone!                             \n")
 	sys.stderr.flush()

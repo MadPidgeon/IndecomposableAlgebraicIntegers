@@ -185,8 +185,8 @@ def strategy_find_szego_polynomial( f, deg_max=14, sol_max=60, verbose=0 ):
             print( "--- degree", deg, "---" )
         (is_indec,g) = find_szego_polynomial( f, deg, sol_max, verbose=verbose-1 )
         if is_indec != None:
-            return (is_indec,g)
-    return (None,None)
+            return (f,(is_indec,g))
+    return (f,(None,None))
 
 
 def strategy_find_fekete_polynomial( f, deg_max=14, sol_max=60, verbose=0 ):
@@ -195,5 +195,5 @@ def strategy_find_fekete_polynomial( f, deg_max=14, sol_max=60, verbose=0 ):
             print( "--- degree", deg, "---" )
         (is_indec,g) = find_fekete_polynomial( f, deg, sol_max, verbose=verbose-1 )
         if is_indec != None:
-            return (is_indec,g)
-    return (None,None)
+            return (f,(is_indec,g))
+    return (f,(None,None))
