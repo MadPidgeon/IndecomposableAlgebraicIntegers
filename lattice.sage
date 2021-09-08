@@ -33,12 +33,16 @@ def coeff_list( f, n ):
 		raise ValueError("Polynomial degree out of bounds.")
 	return L + [0]*(n-len(L))
 
+
+MODE_GEOMETRIC = 0 
+MODE_BINOMIAL = 1
 class PolynomialLattice:
-	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0 ):
+	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, mode=MODE_GEOMETRIC ):
 		self.P = polynomial_ring
 		self.R = order
 		self.c = center
 		self.r = radius
+		self.mode = mode
 		self.order_lattice = OrderLattice( self.R )
 		self.degree = n
 		self.Y = self.P.gen()
@@ -48,8 +52,13 @@ class PolynomialLattice:
 		self.G = GSO.Mat( self.B )
 		self.G.update_gso()
 	def encode( self, f ):
-		g = f( self.r.exact_rational()*self.Y )
-		return [ coord for coeff in coeff_list( g, self.degree ) for coord in self.order_lattice.encode( coeff ) ]
+		if self.mode == MODE_GEOMETRIC:
+			g = f( self.r.exact_rational()*self.Y )
+			return [ coord for coeff in coeff_list( g, self.degree ) for coord in self.order_lattice.encode( coeff ) ]
+		else:
+			g = f( self.r.exact_rational()*self.Y )
+			return [ coord for k, coeff in enumerate( coeff_list( g, self.degree ) ) for coord in self.order_lattice.encode( factorial(k)*coeff ) ]
+		
 	def close_elements( self, target, sol_max, verbose=0 ):
 		try:
 			t = self.G.from_canonical( vector( self.encode( target ) ) )
@@ -147,7 +156,7 @@ def find_fekete_polynomial( f, degree, sol_max=40, verbose=0 ):
 		print( "dtime2 =", end-middle )
 	return (None,None)
 
-def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ):
+def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ): # Possibly incorrect
 	start = time.time()
 	K.<a> = QQ.extension(f)
 	c = a^2 / 4
@@ -156,6 +165,37 @@ def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ):
 	X = Y + c
 	R = K.OK()
 	L = PolynomialLattice( P, R, degree+1, center=c, radius=r )
+	candidates = L.short_elements( sol_max, verbose=verbose-1 )
+	middle = time.time()
+	if verbose > 0:
+		print( "dtime1 =", middle-start )
+
+	places = L.order_lattice.places 
+	for g, g_shift, s in candidates:
+		h = g_shift(Y*(Y-a))
+		if verbose > 0:
+			print( h )
+			print( s )
+		try:
+			if proves_indec( h, places=places ):
+				return ( True, h )
+		except DecompositionException as e:
+			return ( False, e.polynomial )
+
+	end = time.time()
+	if verbose > 0:
+		print( "dtime2 =", end-middle )
+	return (None,None)
+
+def find_fekete_polynomial_binomial( f, degree, sol_max=40, verbose=0 ): # Certainly incorrect
+	start = time.time()
+	K.<a> = QQ.extension(f)
+	c = a^2 / 4
+	r = elm_q(a/2)
+	P.<Y> = K[]
+	X = Y + c
+	R = K.OK()
+	L = PolynomialLattice( P, R, degree+1, center=c, radius=r, mode=MODE_BINOMIAL )
 	candidates = L.short_elements( sol_max, verbose=verbose-1 )
 	middle = time.time()
 	if verbose > 0:
