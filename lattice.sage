@@ -53,25 +53,35 @@ class PolynomialLattice:
 		self.G.update_gso()
 	def encode( self, f ):
 		if self.mode == MODE_GEOMETRIC:
-			g = f( self.r.exact_rational()*self.Y )
+			g = self.P(f)( self.r.exact_rational()*self.Y )
 			return [ coord for coeff in coeff_list( g, self.degree ) for coord in self.order_lattice.encode( coeff ) ]
 		else:
-			g = f( self.r.exact_rational()*self.Y )
+			g = self.P(f)( self.r.exact_rational()*self.Y )
 			return [ coord for k, coeff in enumerate( coeff_list( g, self.degree ) ) for coord in self.order_lattice.encode( factorial(k)*coeff ) ]
 		
 	def close_elements( self, target, sol_max, verbose=0 ):
-		try:
-			t = self.G.from_canonical( vector( self.encode( target ) ) )
-			if verbose > 0:
-				print( t )
-				print( self.B )
-			E = Enumeration( self.G, nr_solutions=sol_max )
-			results = E.enumerate( 0, self.B.nrows, 10**30, 0, target=t )
-			results_as_polynomials = [ (s, sum([ b*int(v) for (b,v) in zip( self.basis, vector ) ]) ) for s, vector in results ]
-			return [ ( f, f(self.Y-self.c), s ) for s, f in results_as_polynomials ]
-		except:
-			print( "No elements found!" )
-			return []
+		t = self.G.from_canonical( vector( self.encode( target ) ) )
+		if verbose > 0:
+			print( t )
+			print( self.B )
+
+		# Basis reduction
+		Binv = Matrix( RR, self.B ).inverse()
+		A = IntegerMatrix( self.B )
+		BKZ.reduction( A, BKZ.Param(20) )
+		F = GSO.Mat(A)
+		F.update_gso()
+		if verbose > 0:
+			print(A)
+
+		# Enumeration
+		E = Enumeration( F, nr_solutions=sol_max )
+		results_wrt_A = E.enumerate( 0, A.nrows, 10**30, 0, target=t )
+		results_wrt_B = [ (s, [ v.round() for v in vector( A.multiply_left( vec ) ) * Binv ] ) for s, vec in results_wrt_A ]
+		results_as_polynomials = [ (s, sum([ b*int(v) for (b,v) in zip( self.basis, vec ) ]) ) for s, vec in results_wrt_B ]
+
+		return [ ( f, f(self.Y-self.c), s ) for s, f in results_as_polynomials ]
+		
 	def short_elements( self, sol_max, verbose=0 ):
 		if verbose > 0:
 			print( self.B )
@@ -86,9 +96,9 @@ class PolynomialLattice:
 			print(A)
 
 		# Enumeration
-		E = Enumeration( F, nr_solutions=sol_max )
+		E = Enumeration( F, nr_solutions=sol_max+1 )[1:]
 		results_wrt_A = E.enumerate( 0, A.nrows, 10**30, 0 )
-		results_wrt_B = [ (s, [ v.round() for v in vector( A.multiply_left( vec ) ) * Binv ]) for s, vec in results_wrt_A ]
+		results_wrt_B = [ (s, [ v.round() for v in vector( A.multiply_left( vec ) ) * Binv ] ) for s, vec in results_wrt_A ]
 		results_as_polynomials = [ (s, sum([ b*int(v) for (b,v) in zip( self.basis, vec ) ]) ) for s, vec in results_wrt_B ]
 
 		return [ ( f, f(self.Y-self.c), s ) for s, f in results_as_polynomials ]
@@ -134,7 +144,8 @@ def find_fekete_polynomial( f, degree, sol_max=40, verbose=0 ):
 	X = Y + c
 	R = K.OK()
 	L = PolynomialLattice( P, R, degree+1, center=c, radius=r )
-	candidates = L.short_elements( sol_max, verbose=verbose-1 )
+	candidates = L.close_elements( 0, sol_max+1, verbose=verbose-1 )[1:]
+	# candidates = L.short_elements( sol_max, verbose=verbose-1 )
 	middle = time.time()
 	if verbose > 0:
 		print( "dtime1 =", middle-start )
