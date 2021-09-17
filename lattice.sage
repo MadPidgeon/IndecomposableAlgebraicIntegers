@@ -33,9 +33,9 @@ def coeff_list( f, n ):
 		raise ValueError("Polynomial degree out of bounds.")
 	return L + [0]*(n-len(L))
 
-
 MODE_GEOMETRIC = 0 
 MODE_BINOMIAL = 1
+MODE_SKEW_GEOMETRIC = 2
 class PolynomialLattice:
 	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, mode=MODE_GEOMETRIC ):
 		self.P = polynomial_ring
@@ -51,13 +51,33 @@ class PolynomialLattice:
 		self.B = IntegerMatrix.from_matrix( [ self.encode( b ) for b in self.basis ] )
 		self.G = GSO.Mat( self.B )
 		self.G.update_gso()
+		self.A = None
+		self.F = None
+		self.Binv = None
+
+	def lazy_basis_reduction( self, param=20 ):
+		if self.A == None:
+			self.Binv = Matrix( RR, self.B ).inverse()
+			self.A = IntegerMatrix( self.B )
+			BKZ.reduction( self.A, BKZ.Param(param) )
+			self.F = GSO.Mat( self.A )
+			self.F.update_gso()
+
 	def encode( self, f ):
+		rq = self.r.exact_rational()
+		g = self.P(f)( rq*self.Y )
 		if self.mode == MODE_GEOMETRIC:
-			g = self.P(f)( self.r.exact_rational()*self.Y )
 			return [ coord for coeff in coeff_list( g, self.degree ) for coord in self.order_lattice.encode( coeff ) ]
+		#elif self.mode == MODE_SKEW_GEOMETRIC:
+		#	return [ coord for k, coeff in enumerate( coeff_list( g, self.degree ) ) for coord in self.order_lattice.encode( coeff ) ]
 		else:
-			g = self.P(f)( self.r.exact_rational()*self.Y )
-			return [ coord for k, coeff in enumerate( coeff_list( g, self.degree ) ) for coord in self.order_lattice.encode( factorial(k)*coeff ) ]
+			return [ coord for k, coeff in enumerate( coeff_list( g, self.degree ) ) for coord in self.order_lattice.encode( factorial(k)*coeff * self.degree^(self.degree-k) ) ]
+
+	def decode_from_B( self, vec ):
+		return sum([ b*int(v) for (b,v) in zip( self.basis, vec ) ])
+
+	def decode_from_A( self, vec ):
+		return self.decode_from_B([ v.round() for v in vector( self.A.multiply_left( vec ) ) * self.Binv ])
 		
 	def close_elements( self, target, sol_max, verbose=0 ):
 		t = self.G.from_canonical( vector( self.encode( target ) ) )
@@ -66,41 +86,34 @@ class PolynomialLattice:
 			print( self.B )
 
 		# Basis reduction
-		Binv = Matrix( RR, self.B ).inverse()
-		A = IntegerMatrix( self.B )
-		BKZ.reduction( A, BKZ.Param(20) )
-		F = GSO.Mat(A)
-		F.update_gso()
+		self.lazy_basis_reduction()
 		if verbose > 0:
-			print(A)
+			print( self.A )
 
 		# Enumeration
-		E = Enumeration( F, nr_solutions=sol_max )
-		results_wrt_A = E.enumerate( 0, A.nrows, 10**30, 0, target=t )
-		results_wrt_B = [ (s, [ v.round() for v in vector( A.multiply_left( vec ) ) * Binv ] ) for s, vec in results_wrt_A ]
-		results_as_polynomials = [ (s, sum([ b*int(v) for (b,v) in zip( self.basis, vec ) ]) ) for s, vec in results_wrt_B ]
+		E = Enumeration( self.F, nr_solutions=sol_max )
+		results = E.enumerate( 0, self.A.nrows, 10**30, 0, target=t )
 
+		# Decode
+		results_as_polynomials = [ ( s, self.decode_from_A( vec ) ) for s, vec in results ]
 		return [ ( f, f(self.Y-self.c), s ) for s, f in results_as_polynomials ]
 		
 	def short_elements( self, sol_max, verbose=0 ):
+		t = self.G.from_canonical( vector( self.encode( 0 ) ) )
 		if verbose > 0:
 			print( self.B )
 
 		# Basis reduction
-		Binv = Matrix( RR, self.B ).inverse()
-		A = IntegerMatrix( self.B )
-		BKZ.reduction( A, BKZ.Param(20) )
-		F = GSO.Mat(A)
-		F.update_gso()
+		self.lazy_basis_reduction()
 		if verbose > 0:
-			print(A)
+			print( self.A )
 
 		# Enumeration
-		E = Enumeration( F, nr_solutions=sol_max+1 )[1:]
-		results_wrt_A = E.enumerate( 0, A.nrows, 10**30, 0 )
-		results_wrt_B = [ (s, [ v.round() for v in vector( A.multiply_left( vec ) ) * Binv ] ) for s, vec in results_wrt_A ]
-		results_as_polynomials = [ (s, sum([ b*int(v) for (b,v) in zip( self.basis, vec ) ]) ) for s, vec in results_wrt_B ]
+		E = Enumeration( self.F, nr_solutions=sol_max+1 )
+		results = E.enumerate( 0, self.A.nrows, 10**30, 0, target=t )[1:]
 
+		# Decode
+		results_as_polynomials = [ ( s, self.decode_from_A( vec ) ) for s, vec in results ]
 		return [ ( f, f(self.Y-self.c), s ) for s, f in results_as_polynomials ]
 
 def find_szego_polynomial( f, degree, sol_max=40, verbose=0 ):
@@ -183,7 +196,8 @@ def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ): # Possibl
 
 	places = L.order_lattice.places 
 	for g, g_shift, s in candidates:
-		h = g_shift(Y*(Y-a))
+		print(g_shift)
+		h = g_shift(Y*(a-Y))
 		if verbose > 0:
 			print( h )
 			print( s )
@@ -214,7 +228,7 @@ def find_fekete_polynomial_binomial( f, degree, sol_max=40, verbose=0 ): # Certa
 
 	places = L.order_lattice.places 
 	for g, g_shift, s in candidates:
-		h = g_shift(Y*(Y-a))
+		h = g_shift(Y*(a-Y))
 		if verbose > 0:
 			print( h )
 			print( s )
