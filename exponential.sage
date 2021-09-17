@@ -83,7 +83,7 @@ def is_extra_good( f, r, places = None ):
 class DecompositionException( Exception ):
 	def __init__( self, g ):
 		self.polynomial = g
-        Exception.__init__( self, str(g) )
+		Exception.__init__( self, str(g) )
 
 def proves_indec( f, places = None, verbose = 0 ):
 	if f.is_constant():
