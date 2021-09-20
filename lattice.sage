@@ -244,7 +244,7 @@ def find_fekete_polynomial_binomial( f, degree, sol_max=40, verbose=0 ): # Certa
 	return (None,None)
 
 class strategy_find_szego_polynomial:
-	def __init__( self, deg_max=10, sol_max=60, verbose=0 ):
+	def __init__( self, deg_max=10, sol_max=50, verbose=0 ):
 		self.deg_max = deg_max
 		self.sol_max = sol_max
 		self.verbose = verbose
@@ -258,7 +258,7 @@ class strategy_find_szego_polynomial:
 		return (f,(None,None))
 
 class strategy_find_fekete_polynomial:
-	def __init__( self, deg_max=10, sol_max=60, verbose=0 ):
+	def __init__( self, deg_max=10, sol_max=50, verbose=0 ):
 		self.deg_max = deg_max
 		self.sol_max = sol_max
 		self.verbose = verbose
@@ -266,7 +266,7 @@ class strategy_find_fekete_polynomial:
 		for deg in range( 1, self.deg_max+1 ):
 			if self.verbose > 0:
 				print( "--- degree", deg, "---" )
-			(is_indec,g) = find_fekete_polynomial( f, deg, self.sol_max, verbose=self.verbose-1 )
+			(is_indec,g) = find_fekete_polynomial_square( f, deg, self.sol_max, verbose=self.verbose-1 )
 			if is_indec != None:
 				return (f,(is_indec,g))
 		return (f,(None,None))
