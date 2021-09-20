@@ -196,7 +196,6 @@ def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ): # Possibl
 
 	places = L.order_lattice.places 
 	for g, g_shift, s in candidates:
-		print(g_shift)
 		h = g_shift(Y*(a-Y))
 		if verbose > 0:
 			print( h )
