@@ -37,13 +37,13 @@ MODE_GEOMETRIC = 0
 MODE_BINOMIAL = 1
 MODE_SKEW_GEOMETRIC = 2
 class PolynomialLattice:
-	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, mode=MODE_GEOMETRIC ):
+	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, precision = 8, mode=MODE_GEOMETRIC ):
 		self.P = polynomial_ring
 		self.R = order
 		self.c = center
 		self.r = radius
 		self.mode = mode
-		self.order_lattice = OrderLattice( self.R )
+		self.order_lattice = OrderLattice( self.R, precision=precision )
 		self.degree = n
 		self.Y = self.P.gen()
 		self.X = self.Y + self.c
