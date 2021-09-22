@@ -196,7 +196,6 @@ def find_fekete_polynomial_square( f, degree, sol_max=40, verbose=0 ): # Possibl
 
 	places = L.order_lattice.places 
 	for g, g_shift, s in candidates:
-		print(g_shift)
 		h = g_shift(Y*(a-Y))
 		if verbose > 0:
 			print( h )
@@ -244,12 +243,13 @@ def find_fekete_polynomial_binomial( f, degree, sol_max=40, verbose=0 ): # Certa
 	return (None,None)
 
 class strategy_find_szego_polynomial:
-	def __init__( self, deg_max=10, sol_max=60, verbose=0 ):
+	def __init__( self, deg_max, deg_min=1, sol_max=50, verbose=0 ):
+		self.deg_min = deg_min
 		self.deg_max = deg_max
 		self.sol_max = sol_max
 		self.verbose = verbose
 	def __call__( self, f ):
-		for deg in range( 1, self.deg_max+1 ):
+		for deg in range( self.deg_min, self.deg_max+1 ):
 			if self.verbose > 0:
 				print( "--- degree", deg, "---" )
 			(is_indec,g) = find_szego_polynomial( f, deg, self.sol_max, verbose=self.verbose-1 )
@@ -258,15 +258,16 @@ class strategy_find_szego_polynomial:
 		return (f,(None,None))
 
 class strategy_find_fekete_polynomial:
-	def __init__( self, deg_max=10, sol_max=60, verbose=0 ):
+	def __init__( self, deg_max, deg_min=1, sol_max=50, verbose=0 ):
+		self.deg_min = deg_min
 		self.deg_max = deg_max
 		self.sol_max = sol_max
 		self.verbose = verbose
 	def __call__( self, f ):
-		for deg in range( 1, self.deg_max+1 ):
+		for deg in range( self.deg_min, self.deg_max+1 ):
 			if self.verbose > 0:
 				print( "--- degree", deg, "---" )
-			(is_indec,g) = find_fekete_polynomial( f, deg, self.sol_max, verbose=self.verbose-1 )
+			(is_indec,g) = find_fekete_polynomial_square( f, deg, self.sol_max, verbose=self.verbose-1 )
 			if is_indec != None:
 				return (f,(is_indec,g))
 		return (f,(None,None))

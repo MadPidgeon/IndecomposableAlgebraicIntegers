@@ -88,7 +88,7 @@ def validate_data( data, verbose = 0 ):
 				if not proves_indec( g, verbose=verbose-1 ):
 					return f
 		elif is_indecomposable == False:
-			if not abspoly_is_decomp( f(X), g(X) ):
+			if not relpoly_is_decomp( g ):
 				return f
 		else:
 			if verbose>0:
