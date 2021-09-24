@@ -9,7 +9,7 @@ class OrderLattice:
 		self.R = order
 		self.precision = precision
 		self.K = self.R.number_field()
-		self.places = self.K.places( precision=200 )
+		self.places = self.K.places( prec=200 )
 		self.basis = self.R.basis()
 		self.n = len( self.basis )
 		self.B = IntegerMatrix.from_matrix( [ self.encode( b ) for b in self.basis ] )
