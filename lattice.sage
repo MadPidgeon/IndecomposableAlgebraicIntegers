@@ -7,9 +7,9 @@ load("exponential.sage")
 class OrderLattice:
 	def __init__( self, order, precision = 5 ):
 		self.R = order
-		self.prec = precision
+		self.precision = precision
 		self.K = self.R.number_field()
-		self.places = self.K.places( prec=200 )
+		self.places = self.K.places( precision=200 )
 		self.basis = self.R.basis()
 		self.n = len( self.basis )
 		self.B = IntegerMatrix.from_matrix( [ self.encode( b ) for b in self.basis ] )
@@ -18,7 +18,7 @@ class OrderLattice:
 	def encode( self, x ):
 		v = []
 		for sigma in self.places:
-			y = sigma(x)*10**self.prec
+			y = sigma(x)*10**self.precision
 			if is_ComplexField( sigma.codomain() ):
 				y = RR(sqrt(2))*y
 				v.append( y.real().integer_part() )
