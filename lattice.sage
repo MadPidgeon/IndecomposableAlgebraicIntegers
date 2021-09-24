@@ -139,6 +139,8 @@ def find_szego_polynomial( f, degree, sol_max=40, verbose=0 ):
 		# The resulting close integral polynomial is X^degree + g
 		# However, since Y is the variable of the polynomial ring, we write Y^degree + g_shift
 		# If so desired, renaming Y to X then gives the right polynomial
+		if verbose > 0:
+			print( g )
 		h = Y**degree + g_shift
 		val = relpoly_decomp_quality_places( h, places )
 		if verbose > 0:
