@@ -1,3 +1,6 @@
+global_precision = 1000
+global_precision_fplll = 150
+
 load("lattice.sage")
 load("bulk.sage")
 

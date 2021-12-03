@@ -5,20 +5,20 @@ load("basic.sage")
 load("exponential.sage")
 
 class OrderLattice:
-	def __init__( self, order, precision = 5 ):
+	def __init__( self, order, precision=global_precision_fplll ):
 		self.R = order
 		self.precision = precision
 		self.K = self.R.number_field()
-		self.places = self.K.places( prec=200 )
+		self.places = self.K.places( prec=global_precision )
 		self.basis = self.R.basis()
 		self.n = len( self.basis )
 		self.B = IntegerMatrix.from_matrix( [ self.encode( b ) for b in self.basis ] )
-		self.G = GSO.Mat( self.B )
+		self.G = GSO.Mat( self.B, float_type="long double" )
 		self.G.update_gso()
 	def encode( self, x ):
 		v = []
 		for sigma in self.places:
-			y = sigma(x)*10**self.precision
+			y = sigma(x)*2**self.precision
 			if is_ComplexField( sigma.codomain() ):
 				y = RR(sqrt(2))*y
 				v.append( y.real().integer_part() )
@@ -37,7 +37,7 @@ MODE_GEOMETRIC = 0
 MODE_BINOMIAL = 1
 MODE_SKEW_GEOMETRIC = 2
 class PolynomialLattice:
-	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, precision = 8, mode=MODE_GEOMETRIC ):
+	def __init__( self, polynomial_ring, order, n, center=0, radius=1.0, precision = global_precision_fplll, mode=MODE_GEOMETRIC ):
 		self.P = polynomial_ring
 		self.R = order
 		self.c = center
@@ -49,7 +49,7 @@ class PolynomialLattice:
 		self.X = self.Y + self.c
 		self.basis = [ b*(self.X)**i for i in range(self.degree) for b in self.order_lattice.basis ]
 		self.B = IntegerMatrix.from_matrix( [ self.encode( b ) for b in self.basis ] )
-		self.G = GSO.Mat( self.B )
+		self.G = GSO.Mat( self.B, float_type="long double" )
 		self.G.update_gso()
 		self.A = None
 		self.F = None
@@ -57,10 +57,10 @@ class PolynomialLattice:
 
 	def lazy_basis_reduction( self, param=20 ):
 		if self.A == None:
-			self.Binv = Matrix( RR, self.B ).inverse()
+			self.Binv = Matrix( QQ, self.B ).inverse()
 			self.A = IntegerMatrix( self.B )
 			BKZ.reduction( self.A, BKZ.Param(param) )
-			self.F = GSO.Mat( self.A )
+			self.F = GSO.Mat( self.A, float_type="long double" )
 			self.F.update_gso()
 
 	def encode( self, f ):
@@ -80,10 +80,12 @@ class PolynomialLattice:
 		return self.decode_from_B([ v.round() for v in vector( self.A.multiply_left( vec ) ) * self.Binv ])
 		
 	def close_elements( self, target, sol_max, verbose=0 ):
+		if verbose > 0:
+			print( self.B )
+
 		t = self.G.from_canonical( vector( self.encode( target ) ) )
 		if verbose > 0:
 			print( t )
-			print( self.B )
 
 		# Basis reduction
 		self.lazy_basis_reduction()
@@ -92,7 +94,7 @@ class PolynomialLattice:
 
 		# Enumeration
 		E = Enumeration( self.F, nr_solutions=sol_max )
-		results = E.enumerate( 0, self.A.nrows, 10**30, 0, target=t )
+		results = E.enumerate( 0, self.A.nrows, 10**100, 0, target=t )
 
 		# Decode
 		results_as_polynomials = [ ( s, self.decode_from_A( vec ) ) for s, vec in results ]
@@ -110,7 +112,7 @@ class PolynomialLattice:
 
 		# Enumeration
 		E = Enumeration( self.F, nr_solutions=sol_max+1 )
-		results = E.enumerate( 0, self.A.nrows, 10**30, 0, target=t )[1:]
+		results = E.enumerate( 0, self.A.nrows, 10**100, 0, target=t )[1:]
 
 		# Decode
 		results_as_polynomials = [ ( s, self.decode_from_A( vec ) ) for s, vec in results ]

@@ -54,8 +54,8 @@ def apply_strategy( data, strat, verbose=2 ):
 				data_copy[f] = result
 				if result[0] != None:
 					print( "FOUND POLYNOMIAL:", result[1] )
-			except:
-				pass
+			except Exception as e: 
+				print(e)
 	if verbose>0:
 		sys.stdout.write("\rDone!                             \n")
 		sys.stdout.flush()

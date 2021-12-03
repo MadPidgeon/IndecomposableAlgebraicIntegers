@@ -28,7 +28,7 @@ def is_monic_integral( f ):
 
 ### Compute q
 def abspoly_q( f ):
-	roots = f.roots( ring=ComplexField(200), multiplicities=False )
+	roots = f.roots( ring=ComplexField(global_precision), multiplicities=False )
 	return sum([ abs(x)**2 for x in roots ]) / f.degree()
 
 def elm_q( alpha ):
@@ -94,8 +94,9 @@ def abspoly_is_decomp( f, g ):
 
 ### Polynomial candidates of bounded q
 def maclaurin_bound( deg, q = 4 ):
-	P.<X> = RR[]
-	f = (X+(q+0.00000001)**.5)^deg
+	RRR = RealField(global_precision)
+	P.<X> = RRR[]
+	f = (X+(q+RRR(0.00000001))**.5)^deg
 	return [ x.floor() for x in list(f) ]
 
 def maclaurin_candidates( deg, P, q = 4 ):
